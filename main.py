@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from tabpfn_client import TabPFNClassifier
 from tinker import types
 
-from prompt_format import wrap_prompt
+from prompt_format import extract_first_json, wrap_prompt
 
 load_dotenv()
 
@@ -92,9 +92,10 @@ async def plan(req: PlanReq):
         sampling_params=types.SamplingParams(max_tokens=400, temperature=0.3),
     )
     raw_text = _tokenizer.decode(result.sequences[0].tokens, skip_special_tokens=True)
+    json_text = extract_first_json(raw_text)
     import json
     try:
-        parsed = json.loads(raw_text)
+        parsed = json.loads(json_text)
     except json.JSONDecodeError:
         return {"raw": raw_text, "parse_error": True}
     parsed["checks_passed"] = True  # rule_checker can be wired in here before returning

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import tinker
 from tinker import types
 
-from prompt_format import wrap_prompt
+from prompt_format import extract_first_json, wrap_prompt
 from rule_checker import check_plan, score_batch
 
 load_dotenv()
@@ -51,7 +51,8 @@ async def sample(service_client, tokenizer, label, prompt, **sampling_client_kwa
         num_samples=1,
         sampling_params=types.SamplingParams(max_tokens=400, temperature=0.3),
     )
-    return tokenizer.decode(result.sequences[0].tokens, skip_special_tokens=True)
+    raw = tokenizer.decode(result.sequences[0].tokens, skip_special_tokens=True)
+    return extract_first_json(raw)
 
 
 async def main():
