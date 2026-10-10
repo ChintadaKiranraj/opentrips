@@ -1,0 +1,9 @@
+/** Small deterministic string hash used to make mock responses stable per input. */
+export function stableHash(input: string): number {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
