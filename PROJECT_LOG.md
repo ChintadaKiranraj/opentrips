@@ -215,11 +215,32 @@ Kiran deploys the Next.js frontend separately, on his own Render account.
 
 ---
 
-## 11. Git identity policy (easy to get backwards, bit us twice)
+## 11. Preferences and standing policies
+
+### GitHub and attribution
+
+- **No AI-tool attribution anywhere, full stop.** No `Co-Authored-By` trailers, no "Generated with [tool]" lines in commits, PRs, code comments, or docs. Commit **author and committer** both verified as Ashwin Temkar on every commit, not just the author field.
+- No mention of any AI tool by name anywhere in the repo, code, or write-up, checked by grepping the full tracked tree plus every commit message before each push.
+- If GitHub's own UI (contributor graph, Insights) shows something stale after a history rewrite, that's a caching lag on GitHub's side, not a real data problem, confirmed by checking `gh api repos/.../contributors` directly rather than trusting the cached graph.
+- All commits are squeaky-clean, real author identity, real descriptive messages, no filler.
+
+### Git identity policy (easy to get backwards, bit us twice already)
 
 - **Global default** (`git config --global`): `ashwin@haddowsinfotech.com`, the work default, applies to projects under `Documents/haddows`.
 - **Local override**, set explicitly at the start of every personal/hackathon project: `ashwintemkar@gmail.com`. Must be `git config --local user.email ...` run *after* `git init`, not before (deleting `.git` also deletes a local override that was set first).
-- No Co-Authored-By trailers, no AI-tool attribution anywhere, commit author and committer both verified as Ashwin Temkar on every commit in this repo.
+
+### Writing style (write-ups, emails, any prose deliverable)
+
+- **No em dashes.** No semicolons either. Use periods, commas, or just rephrase.
+- Direct and factual over flowery. State a finding plainly rather than building drama around it.
+- When reporting on other people (e.g. the Mergetober organizer email), stick to facts with evidence links, flag uncertainty explicitly rather than asserting bad faith, and don't pad a list with names that don't have solid backing just to make it look more thorough.
+
+### How work gets done
+
+- **Real numbers over presentable numbers.** When the first TabPFN/Tinker results looked plausible but were actually methodology bugs (imbalanced splits, undertrained model), the fix was to find and report the real problem, not to quietly keep the better-looking wrong number.
+- Verify library/API behavior by introspecting the actually-installed package when it's load-bearing, rather than trusting documentation or a pattern that worked on a different project.
+- Flag anything that risks looking fabricated, gamed, or deceptive (cron-scheduling comments to fake organic timing, inflating claims the architecture doesn't support) before building it, not after.
+- Manual/credential tasks (account signups, API tokens, DNS, anything needing a login) get listed out explicitly and separately from what can be built directly, so nothing stalls waiting on an assumption.
 
 ---
 
