@@ -1,0 +1,9 @@
+pandas
+numpy
+requests
+scikit-learn
+tabpfn-client
+fastapi
+uvicorn
+tinker
+python-dotenv
