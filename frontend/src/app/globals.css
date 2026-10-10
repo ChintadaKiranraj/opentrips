@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* Theme is driven by a `.dark` class on <html> (see lib/utils/theme.ts), not the OS media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #fafafa;
+  --foreground: #18181b;
+  --brand-from: #10b981;
+  --brand-to: #14b8a6;
+  --brand-accent: #22d3ee;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --spotlight: rgba(16, 185, 129, 0.12);
+  --mesh-opacity: 0.35;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-from: var(--brand-from);
+  --color-brand-to: var(--brand-to);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --brand-from: #34d399;
+  --brand-to: #2dd4bf;
+  --brand-accent: #0891b2;
+  --glass-bg: rgba(24, 24, 27, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --spotlight: rgba(52, 211, 153, 0.1);
+  --mesh-opacity: 0.22;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Circular theme reveal: ThemeToggle animates the new snapshot's clip-path itself. */
+:root.theme-switching::view-transition-old(root),
+:root.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+:root.theme-switching::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* Gradient-clipped text used for brand mark + hero headline. */
+.gradient-text {
+  background-image: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Shared glassmorphic surface: semi-transparent + blur + hairline border. */
+.glass-surface {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Ambient, slow-drifting gradient-mesh background. Transform/opacity only. */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mesh-bg::before,
+.mesh-bg::after,
+.mesh-blob {
+  content: "";
+  position: absolute;
+  width: 60vw;
+  height: 60vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-radius: 9999px;
+  filter: blur(120px);
+  opacity: var(--mesh-opacity);
+  transition: opacity 0.6s ease;
+  will-change: transform;
+}
+
+.mesh-blob {
+  top: 35%;
+  left: 40%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, var(--brand-accent), transparent 70%);
+  opacity: calc(var(--mesh-opacity) * 0.6);
+  animation: mesh-drift-3 38s ease-in-out infinite;
+}
+
+.mesh-bg::before {
+  top: -12%;
+  left: -12%;
+  background: radial-gradient(circle, var(--brand-from), transparent 70%);
+  animation: mesh-drift-1 26s ease-in-out infinite;
+}
+
+.mesh-bg::after {
+  bottom: -16%;
+  right: -10%;
+  background: radial-gradient(circle, var(--brand-to), transparent 70%);
+  animation: mesh-drift-2 32s ease-in-out infinite;
+}
+
+@keyframes mesh-drift-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8%, 10%) scale(1.1);
+  }
+}
+
+@keyframes mesh-drift-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-6%, -8%) scale(1.08);
+  }
+}
+
+@keyframes mesh-drift-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-18%, 12%) scale(1.15);
+  }
+  66% {
+    transform: translate(14%, -10%) scale(0.92);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-bg::before,
+  .mesh-bg::after,
+  .mesh-blob {
+    animation: none;
+  }
+}

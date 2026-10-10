@@ -37,6 +37,16 @@ POST /plan
 
 Both sides can build against this contract without waiting on each other. Mock the responses on the frontend until `/healthz` on the real backend returns `checkpoint_loaded: true`.
 
+## Frontend setup (Kiran's track)
+
+The Next.js application lives in [`frontend/`](frontend/README.md). From that
+directory, run `pnpm install`, copy `.env.example` to `.env.local`, configure
+Google sign-in credentials, and run `pnpm dev`.
+
+The frontend currently uses labeled mock risk assessments and trip plans.
+Its provisional request and response types still need to be adapted to the
+FastAPI contract above before enabling real backend mode.
+
 ## Backend setup (Ashwin's track)
 
 ```bash
