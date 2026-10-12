@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { AreaInsightsSection } from "@/components/insights/AreaInsightsSection";
 import { ItineraryCard } from "@/components/results/ItineraryCard";
 import { RiskSummaryCard } from "@/components/results/RiskSummaryCard";
 import { Button } from "@/components/ui/Button";
@@ -43,7 +44,16 @@ export default function ResultsPage() {
       </FadeIn>
 
       <RiskSummaryCard risk={result.risk} delay={0.1} />
-      <ItineraryCard plan={result.plan} delay={0.25} />
+      {result.location && (
+        <AreaInsightsSection
+          location={result.location}
+          verdict={result.risk.verdict}
+          startDate={result.plan.startDate}
+          endDate={result.plan.endDate}
+          delay={0.2}
+        />
+      )}
+      <ItineraryCard plan={result.plan} delay={0.3} />
     </main>
   );
 }

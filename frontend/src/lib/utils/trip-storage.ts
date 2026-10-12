@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 
+import type { GeocodeResult } from "@/types/geo";
 import type { PlanResponse } from "@/types/plan";
 import type { RiskResponse } from "@/types/risk";
 
@@ -8,6 +9,8 @@ const STORAGE_KEY = "trip-planner:last-result";
 export interface TripResult {
   risk: RiskResponse;
   plan: PlanResponse;
+  /** Missing on results saved before OpenStreetMap geocoding was added. */
+  location?: GeocodeResult;
 }
 
 /**

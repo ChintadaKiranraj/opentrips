@@ -75,8 +75,8 @@ TypeScript validation: `pnpm exec tsc --noEmit`
 
 ## API endpoints
 
-Both endpoints are Next.js Route Handlers acting as the frontend-facing API boundary. In mock mode
-they return deterministic, clearly-labeled mock data generated in `src/lib/api/mock-risk.ts` and
+All endpoints are Next.js Route Handlers. The risk and plan endpoints form the frontend-facing API boundary to the AI
+service. In mock mode they return deterministic, clearly-labeled mock data generated in `src/lib/api/mock-risk.ts` and
 `src/lib/api/mock-plan.ts`. In proxy mode (`USE_MOCK_AI=false`) they forward the request to the
 FastAPI backend at `AI_API_BASE_URL` and return its response unchanged.
 
@@ -122,6 +122,42 @@ Response (mock mode):
 }
 ```
 
+### `POST /api/geocode`
+
+Resolves a destination name to coordinates with OpenStreetMap's
+[Nominatim](https://nominatim.org) search (server-side, cached in memory to respect the
+[usage policy](https://operations.osmfoundation.org/policies/nominatim/)).
+
+Request: `{ "place": "Munnar, Kerala" }`
+
+Response: `{ "displayName": "...", "latitude": 10.08, "longitude": 77.06, "boundingBox": [s, n, w, e] }`,
+or `404` when OpenStreetMap has no match.
+
+The trip form calls this before `/api/risk`, and the results page shows the destination on an
+interactive OpenStreetMap map (Leaflet). Map tiles come from `tile.openstreetmap.org` and carry the
+required "© OpenStreetMap contributors" attribution.
+
+### `POST /api/insights`
+
+Real (not mocked) area data for the destination map, fetched in parallel. Each layer succeeds or
+fails on its own, so one slow source never blanks the whole map.
+
+Request: `{ "latitude": 10.08, "longitude": 77.06, "startDate": "2026-10-17", "endDate": "2026-10-18" }`
+
+Response: `{ "landslides": Layer, "weather": Layer, "stays": Layer }`, where each layer is
+`{ "status": "ok", "data": ... }` or `{ "status": "error", "message": "..." }`. See
+`src/types/insights.ts` for the full shape.
+
+| Layer | Source | What it shows |
+| --- | --- | --- |
+| Past landslides | [NASA Global Landslide Catalog](https://data.nasa.gov/Earth-Science/Global-Landslide-Catalog/h9d8-neg4) | Recorded events within 30 km, sized by fatalities |
+| Bad weather | [Open-Meteo](https://open-meteo.com) forecast | A 5 by 5 grid around the destination, shaded where heavy rain, storms, or strong wind are forecast for the trip dates |
+| Places to stay | OpenStreetMap via Nominatim | Hotels, guest houses, resorts, and hostels within 15 km, ranked by stars, distance, and distance from recorded landslides |
+
+Stays less than 1 km from a recorded landslide are flagged as risky and ranked lower. Open-Meteo
+forecasts only 16 days ahead; for later trips the next 7 days are shown with a note. The landslide
+catalog is downloaded once per server process and cached in memory.
+
 ### `POST /api/plan`
 
 Request: same trip details, plus optional `riskVerdict` and `riskScore` from a prior `/api/risk` call.
@@ -148,17 +184,19 @@ must be reconciled with the real FastAPI service before go-live.
 
 - Risk scores and itineraries are simulated demo data only. They are not real landslide forecasts or
   AI-generated plans.
-- No geocoding yet: the trip form doesn't resolve a destination name to latitude/longitude, so a
-  placeholder coordinate pair is sent to `/api/risk`.
+- Geocoding uses the free public Nominatim instance, which allows about one request per second. A
+  production deployment should use a self-hosted or commercial geocoder and tile server.
+- OpenStreetMap has no guest reviews or prices, so hotel ranking uses stars, distance, and landslide
+  proximity only. The NASA landslide catalog covers events reported from 2007 to 2020.
 - No persistence: results live only in `sessionStorage` for the current tab (see `/results`). The
   `/plans/[id]` route is a reserved placeholder and does not yet load saved plans.
 - No offline support yet.
 - No automated tests yet.
 
-## Next development tasks (B2 to B6)
+## Next development tasks (B3 to B6)
 
-- **B2:** Geocode the destination input (convert the place name to latitude and longitude) before
-  calling `/api/risk`.
+B2 (geocoding the destination with OpenStreetMap) is done.
+
 - **B3:** PostgreSQL and Prisma persistence for generated plans; replace the `/results` sessionStorage
   hand-off with a saved record.
 - **B4:** Shareable saved-plan URLs served from `/plans/[id]`.
