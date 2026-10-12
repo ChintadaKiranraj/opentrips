@@ -37,15 +37,34 @@ POST /plan
 
 Both sides can build against this contract without waiting on each other. Mock the responses on the frontend until `/healthz` on the real backend returns `checkpoint_loaded: true`.
 
+## Secrets and deploy checklist
+
+See [`SECRETS_CHECKLIST.md`](SECRETS_CHECKLIST.md) for every account/key you
+need to create (Google OAuth, Supabase or local Docker Postgres, TabPFN,
+Tinker, Render). Put values in `frontend/.env.local` and Render env vars.
+Do not commit them.
+
+`render.yaml` deploys both the FastAPI backend and the Next.js frontend.
+
 ## Frontend setup (Kiran's track)
 
 The Next.js application lives in [`frontend/`](frontend/README.md). From that
 directory, run `pnpm install`, copy `.env.example` to `.env.local`, configure
 Google sign-in credentials, and run `pnpm dev`.
 
-The frontend currently uses labeled mock risk assessments and trip plans.
-Its provisional request and response types still need to be adapted to the
-FastAPI contract above before enabling real backend mode.
+Optional local Postgres:
+
+```bash
+docker compose up -d
+cd frontend
+# PowerShell
+$env:DATABASE_URL="postgresql://opentrips:opentrips@localhost:5432/opentrips"
+pnpm db:push
+```
+
+Contract adapter, geocoding, Prisma persistence, and offline plan caching are
+already in place. Keep `USE_MOCK_AI=true` until the backend `/healthz` is live,
+then set `USE_MOCK_AI=false` and `AI_API_BASE_URL` to the Render API URL.
 
 ## Backend setup (Ashwin's track)
 

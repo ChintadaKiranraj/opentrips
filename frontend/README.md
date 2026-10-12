@@ -38,15 +38,19 @@ Copy `.env.example` to `.env.local` and adjust as needed:
 cp .env.example .env.local
 ```
 
-| Variable          | Description                                                                                   |
-| ------------------ | ---------------------------------------------------------------------------------------------- |
-| `USE_MOCK_AI`       | `true` (default) uses local mock responses. `false` proxies to `AI_API_BASE_URL`.               |
-| `AI_API_BASE_URL`   | Base URL of the FastAPI AI backend. Required when `USE_MOCK_AI=false`; read server-side only.    |
-| `AUTH_SECRET`       | Auth.js session encryption key. Generate one with `npx auth secret`.                           |
-| `AUTH_GOOGLE_ID`    | Google OAuth client ID.                                                                        |
-| `AUTH_GOOGLE_SECRET` | Google OAuth client secret.                                                                   |
+| Variable            | Description |
+| ------------------- | ----------- |
+| `USE_MOCK_AI`       | `true` (default) uses local mocks. `false` proxies to `AI_API_BASE_URL`. |
+| `AI_API_BASE_URL`   | FastAPI base URL. Required when `USE_MOCK_AI=false`. |
+| `AUTH_SECRET`       | Auth.js session key. Generate with `npx auth secret`. |
+| `AUTH_GOOGLE_ID`    | Google OAuth client ID. |
+| `AUTH_GOOGLE_SECRET`| Google OAuth client secret. |
+| `AUTH_URL`          | Production site URL (Render), e.g. `https://opentrips-web.onrender.com`. |
+| `DATABASE_URL`      | Postgres URI. Local Docker or Supabase pooled URI. See root `SECRETS_CHECKLIST.md`. |
 
 These are read exclusively on the server and are never exposed to the client.
+
+Full account/secret steps live in [`../SECRETS_CHECKLIST.md`](../SECRETS_CHECKLIST.md).
 
 ## Google sign-in
 
@@ -180,28 +184,43 @@ The request and response types in `src/types/risk.ts` and `src/types/plan.ts` ar
 **provisional**. They describe what Track B currently mocks, not a contract confirmed with the backend developer. They
 must be reconciled with the real FastAPI service before go-live.
 
+## Local Postgres (Docker)
+
+From the repo root (start Docker Desktop first):
+
+```bash
+docker compose up -d
+cd frontend
+# PowerShell:
+$env:DATABASE_URL="postgresql://opentrips:opentrips@localhost:5432/opentrips"
+pnpm db:push
+```
+
+Put the same `DATABASE_URL` in `.env.local`. For production, use Supabase instead (see
+`SECRETS_CHECKLIST.md`).
+
+## Real backend mode (B6)
+
+Once Ashwin's FastAPI service is live:
+
+```
+USE_MOCK_AI=false
+AI_API_BASE_URL=https://YOUR-BACKEND.onrender.com
+```
+
+`src/lib/api/client.ts` adapts the real `/risk` and `/plan` responses into the UI types.
+Geocoding is wired via OpenStreetMap Nominatim (`POST /api/geocode`). Saved plans go to Postgres via
+`POST /api/trips` and load at `/plans/[id]`. Offline cache covers previously opened `/plans/*`
+pages (`public/sw.js`). Map + area insights (landslides, weather grid, stays) render on `/results`.
+
 ## Known limitations
 
-- Risk scores and itineraries are simulated demo data only. They are not real landslide forecasts or
-  AI-generated plans.
+- In mock mode, risk scores and itineraries are simulated. With `USE_MOCK_AI=false`, they come from
+  the TabPFN / Tinker FastAPI backend.
 - Geocoding uses the free public Nominatim instance, which allows about one request per second. A
   production deployment should use a self-hosted or commercial geocoder and tile server.
 - OpenStreetMap has no guest reviews or prices, so hotel ranking uses stars, distance, and landslide
   proximity only. The NASA landslide catalog covers events reported from 2007 to 2020.
-- No persistence: results live only in `sessionStorage` for the current tab (see `/results`). The
-  `/plans/[id]` route is a reserved placeholder and does not yet load saved plans.
-- No offline support yet.
+- Without `DATABASE_URL`, save falls back to sessionStorage + `/results`.
+- Without Google OAuth env vars, local auth is open; production must set them.
 - No automated tests yet.
-
-## Next development tasks (B3 to B6)
-
-B2 (geocoding the destination with OpenStreetMap) is done.
-
-- **B3:** PostgreSQL and Prisma persistence for generated plans; replace the `/results` sessionStorage
-  hand-off with a saved record.
-- **B4:** Shareable saved-plan URLs served from `/plans/[id]`.
-- **B5:** Offline caching (service worker) for previously generated plans.
-- **B6:** Replace `src/lib/api/mock-risk.ts` and `mock-plan.ts` with the real FastAPI integration once
-  the backend developer confirms the `/risk` and `/plan` contracts; update `src/types/risk.ts` and
-  `src/types/plan.ts` accordingly.
-- Loading skeletons and refined mobile layout (currently a basic responsive layout only).

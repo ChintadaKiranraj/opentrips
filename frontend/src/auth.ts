@@ -5,18 +5,29 @@ import Google from "next-auth/providers/google";
  * Google sign-in via Auth.js. Reads AUTH_SECRET, AUTH_GOOGLE_ID, and
  * AUTH_GOOGLE_SECRET from the environment. Sessions are stateless JWT cookies,
  * so no database is required.
+ *
+ * If AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET are missing, auth is open for local
+ * smoke tests (no sign-in wall). Production on Render must set both.
  */
+const googleConfigured = Boolean(
+  process.env.AUTH_GOOGLE_ID?.trim() && process.env.AUTH_GOOGLE_SECRET?.trim(),
+);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
+  providers: googleConfigured ? [Google] : [],
   pages: {
     signIn: "/sign-in",
     error: "/sign-in",
   },
   callbacks: {
     authorized({ auth: session, request }) {
+      if (!googleConfigured) return true;
       if (session?.user) return true;
       if (request.nextUrl.pathname.startsWith("/api/")) {
-        return Response.json({ error: "Unauthorized", details: "Please sign in first." }, { status: 401 });
+        return Response.json(
+          { error: "Unauthorized", details: "Please sign in first." },
+          { status: 401 },
+        );
       }
       return false;
     },

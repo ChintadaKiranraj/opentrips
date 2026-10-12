@@ -1,11 +1,9 @@
 /**
- * PROVISIONAL CONTRACT: Risk domain types.
+ * CONFIRMED CONTRACT: Risk domain types.
  *
- * These types describe the shape Track B currently mocks for the FastAPI
- * `/risk` endpoint. The real backend contract has not been confirmed with
- * the AI/backend teammate yet. Field names, units, and value ranges here
- * are placeholders and MUST be reconciled before wiring up the real API
- * (see src/lib/api/client.ts).
+ * Reconciled against the real FastAPI `/risk` endpoint in `main.py` (see
+ * PROJECT_LOG.md §12/§13). Every field here is either sent to, or returned
+ * by, the real backend, no placeholder or fabricated fields.
  */
 
 export type RiskVerdict = "GO" | "CAUTION" | "WAIT";
@@ -19,18 +17,23 @@ export interface RiskRequest {
   constraints?: string;
 }
 
+/**
+ * Real rolling rainfall windows straight from Open-Meteo's forecast API,
+ * the same features the TabPFN model is scored on. No soil-moisture or
+ * other sensor the project doesn't actually have.
+ */
 export interface RainfallFeatures {
-  /** Example feature placeholders only, not sourced from a real weather model. */
-  last24hRainfallMm: number;
-  last72hRainfallMm: number;
-  forecastRainfallMm: number;
-  soilSaturationIndex: number; // 0-1, placeholder
+  rain1dMm: number;
+  rain3dMm: number;
+  rain7dMm: number;
+  rain14dMm: number;
 }
 
 /**
- * Model evaluation metrics are intentionally nullable. Until the backend
- * team supplies real, validated metrics, UI must render these as
- * "not yet available" rather than inventing numbers.
+ * accuracy is TabPFN's real GEO-split score (India held out entirely from
+ * training, see PROJECT_LOG.md §6). precision/recall/f1 are left null,
+ * they were never computed, and this type keeps that honest rather than
+ * inventing numbers for the UI.
  */
 export interface ModelEvaluationMetrics {
   accuracy: number | null;
@@ -42,12 +45,12 @@ export interface ModelEvaluationMetrics {
 
 export interface RiskResponse {
   destination: string;
-  riskScore: number; // 0-1, SIMULATED, not a real landslide forecast
+  riskScore: number; // 0-1, TabPFN's predicted probability in real mode
   verdict: RiskVerdict;
   explanation: string;
   rainfallFeatures: RainfallFeatures;
   modelName: string;
   modelMetrics: ModelEvaluationMetrics;
-  isMockData: true;
+  isMockData: boolean;
   disclaimer: string;
 }

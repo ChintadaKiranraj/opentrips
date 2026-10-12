@@ -10,7 +10,8 @@ const DISCLAIMER =
  *
  * This does NOT model real landslide risk. It derives a pseudo-random but
  * repeatable score from the request so the UI has stable, demo-able data
- * while Track B's AI teammate builds the real FastAPI model.
+ * while real backend mode (USE_MOCK_AI=false) is off. Field shape matches
+ * `src/types/risk.ts` exactly, so switching modes never requires a UI change.
  */
 export function generateMockRiskResponse(request: RiskRequest): RiskResponse {
   const seed = stableHash(
@@ -33,10 +34,10 @@ export function generateMockRiskResponse(request: RiskRequest): RiskResponse {
     verdict,
     explanation: explanationByVerdict[verdict],
     rainfallFeatures: {
-      last24hRainfallMm: Math.round((seed % 50) * 10) / 10,
-      last72hRainfallMm: Math.round((seed % 150) * 10) / 10,
-      forecastRainfallMm: Math.round((seed % 80) * 10) / 10,
-      soilSaturationIndex: Math.round(((seed % 100) / 100) * 100) / 100,
+      rain1dMm: Math.round((seed % 50) * 10) / 10,
+      rain3dMm: Math.round((seed % 100) * 10) / 10,
+      rain7dMm: Math.round((seed % 150) * 10) / 10,
+      rain14dMm: Math.round((seed % 200) * 10) / 10,
     },
     modelName: "mock-risk-v0 (placeholder, not a trained model)",
     modelMetrics: {
@@ -45,7 +46,7 @@ export function generateMockRiskResponse(request: RiskRequest): RiskResponse {
       recall: null,
       f1Score: null,
       notes:
-        "No real model metrics are available yet. These will be populated once the FastAPI backend provides validated evaluation results.",
+        "No real model metrics are available in mock mode. These come from TabPFN's GEO-split accuracy once USE_MOCK_AI=false.",
     },
     isMockData: true,
     disclaimer: DISCLAIMER,

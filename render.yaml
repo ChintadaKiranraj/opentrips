@@ -1,3 +1,7 @@
+# Render Blueprint: backend (Ashwin) + frontend (Kiran can deploy this from
+# the same repo on his own Render account, or Ashwin can deploy both).
+# Env vars marked sync:false must be set in the Render dashboard.
+
 services:
   - type: web
     name: opentrips-api
@@ -5,12 +9,40 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
     envVars:
       - key: TABPFN_TOKEN
         sync: false
       - key: PLAN_CHECKPOINT_PATH
         sync: false
       - key: MODEL_ACCURACY
-        sync: false
+        value: "0.899"
       - key: TINKER_API_KEY
+        sync: false
+
+  - type: web
+    name: opentrips-web
+    runtime: node
+    plan: free
+    rootDir: frontend
+    # prisma generate runs via postinstall. db:push only if DATABASE_URL is set,
+    # so a first deploy without Supabase wired yet still builds.
+    buildCommand: corepack enable && pnpm install && if [ -n "$DATABASE_URL" ]; then pnpm db:push; fi && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: USE_MOCK_AI
+        value: "false"
+      - key: AI_API_BASE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+      - key: AUTH_GOOGLE_ID
+        sync: false
+      - key: AUTH_GOOGLE_SECRET
+        sync: false
+      - key: AUTH_URL
         sync: false

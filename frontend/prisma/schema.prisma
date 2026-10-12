@@ -1,0 +1,27 @@
+// OpenTrips persistence: one row per generated trip plan, so a judge (or
+// anyone) can revisit a shareable /plans/[id] link instead of it vanishing
+// when the tab closes. See PROJECT_LOG.md B3/B4.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Trip {
+  id          String   @id @default(cuid())
+  place       String
+  latitude    Float
+  longitude   Float
+  startDate   String
+  endDate     String
+  constraints String?
+  /// Full RiskResponse JSON, exactly what was shown to the user.
+  riskJson    Json
+  /// Full PlanResponse JSON, exactly what was shown to the user.
+  planJson    Json
+  createdAt   DateTime @default(now())
+}

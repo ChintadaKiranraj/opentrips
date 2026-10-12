@@ -12,6 +12,8 @@ function isValidPlanRequest(body: unknown): body is PlanRequest {
   return (
     typeof candidate.place === "string" &&
     candidate.place.trim().length > 0 &&
+    typeof candidate.latitude === "number" &&
+    typeof candidate.longitude === "number" &&
     typeof candidate.startDate === "string" &&
     typeof candidate.endDate === "string"
   );
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
       {
         error: "Invalid plan request.",
         details:
-          "Expected { place: string, startDate: string, endDate: string, constraints?: string, riskVerdict?: string, riskScore?: number }",
+          "Expected { place: string, latitude: number, longitude: number, startDate: string, endDate: string, constraints?: string, riskVerdict?: string, riskScore?: number }",
       },
       { status: 400 },
     );

@@ -6,6 +6,7 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { MotionProvider } from "@/components/layout/MotionProvider";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { themeInitScript } from "@/lib/utils/theme";
 
 import "./globals.css";
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
           <SiteFooter />
         </MotionProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

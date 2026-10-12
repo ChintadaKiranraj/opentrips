@@ -1,7 +1,9 @@
 """OpenTrips API: /risk (TabPFN landslide/rain risk) and /plan (Tinker
 fine-tuned trip planner). This is the contract Kiran's Next.js app calls.
 """
+import json
 import os
+import re
 
 import pandas as pd
 import requests
@@ -13,6 +15,7 @@ from tabpfn_client import TabPFNClassifier
 from tinker import types
 
 from prompt_format import extract_first_json, wrap_prompt
+from rule_checker import check_plan
 
 load_dotenv()
 
@@ -57,19 +60,55 @@ def risk(req: RiskReq):
     precip = [p for p in r.get("daily", {}).get("precipitation_sum", []) if p is not None]
     rain_total = sum(precip) if precip else 0.0
 
+    rain_1d = precip[0] if precip else 0
+    rain_3d = sum(precip[:3]) if precip else 0
+    rain_7d = sum(precip[:7]) if precip else 0
+    rain_14d = rain_total
+
     feats = pd.DataFrame([{
-        "rain_1d": precip[0] if precip else 0,
-        "rain_3d": sum(precip[:3]) if precip else 0,
-        "rain_7d": sum(precip[:7]) if precip else 0,
-        "rain_14d": rain_total,
+        "rain_1d": rain_1d,
+        "rain_3d": rain_3d,
+        "rain_7d": rain_7d,
+        "rain_14d": rain_14d,
         "lat": req.lat, "lon": req.lon,
     }])
     proba = float(_tabpfn.predict_proba(feats)[0][1])
     verdict = "wait" if proba > 0.6 else "caution" if proba > 0.3 else "go"
     return {
         "risk": proba, "verdict": verdict,
+        # Real rolling rainfall windows, the same features TabPFN sees, not
+        # fabricated UI filler. rain_mm_forecast kept for backward compat,
+        # equal to rain_14d (the full requested window).
+        "rain_1d": rain_1d, "rain_3d": rain_3d, "rain_7d": rain_7d, "rain_14d": rain_14d,
         "rain_mm_forecast": rain_total, "model_accuracy": MODEL_ACCURACY,
     }
+
+
+_LOW_ABILITY_KEYWORDS = (
+    "beginner", "elderly", "kid", "child", "toddler", "knee", "asthma",
+    "pregnan", "wheelchair", "injury",
+)
+_HIGH_ABILITY_KEYWORDS = ("advanced", "experienced", "expert")
+
+
+def extract_check_limits(request_text: str) -> tuple[float, float]:
+    """Pulls a max budget and a max per-day distance out of the free-text
+    request, the same two numbers rule_checker.py needs to score the plan.
+    This mirrors the hand-written heuristic used for compare_plans.py, it's
+    an explicit rule, not a model, that's the point of a rule checker.
+    """
+    budget_match = re.search(r"budget[^\d]{0,12}(\d{3,6})", request_text, re.IGNORECASE)
+    max_budget = float(budget_match.group(1)) if budget_match else float(
+        os.environ.get("DEFAULT_MAX_BUDGET", "10000")
+    )
+    text_lower = request_text.lower()
+    if any(k in text_lower for k in _LOW_ABILITY_KEYWORDS):
+        max_distance_km = 8.0
+    elif any(k in text_lower for k in _HIGH_ABILITY_KEYWORDS):
+        max_distance_km = 25.0
+    else:
+        max_distance_km = 15.0
+    return max_budget, max_distance_km
 
 
 class PlanReq(BaseModel):
@@ -93,12 +132,15 @@ async def plan(req: PlanReq):
     )
     raw_text = _tokenizer.decode(result.sequences[0].tokens, skip_special_tokens=True)
     json_text = extract_first_json(raw_text)
-    import json
     try:
         parsed = json.loads(json_text)
     except json.JSONDecodeError:
         return {"raw": raw_text, "parse_error": True}
-    parsed["checks_passed"] = True  # rule_checker can be wired in here before returning
+
+    max_budget, max_distance_km = extract_check_limits(req.request_text)
+    check = check_plan(json_text, max_budget, max_distance_km)
+    parsed["checks_passed"] = check["passed"]
+    parsed["checks"] = check
     return parsed
 
 

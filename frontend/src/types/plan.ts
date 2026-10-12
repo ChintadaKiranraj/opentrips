@@ -1,16 +1,19 @@
 /**
- * PROVISIONAL CONTRACT: Itinerary and plan domain types.
+ * CONFIRMED CONTRACT: Itinerary and plan domain types.
  *
- * Mirrors the shape Track B mocks for the future FastAPI `/plan` endpoint.
- * Not yet confirmed with the backend developer. See the note in risk.ts.
+ * Reconciled against what `main.py`'s `/plan` endpoint actually returns,
+ * the raw JSON shape the Tinker fine-tuned model emits (see
+ * `plan_examples.jsonl`, `rule_checker.py`), not an invented richer shape.
+ * No per-activity duration, difficulty label, or budget breakdown is
+ * fabricated here, the model was never trained to produce those.
  */
 
 import type { RiskVerdict } from "./risk";
 
-export type DifficultyLevel = "easy" | "moderate" | "challenging";
-
 export interface PlanRequest {
   place: string;
+  latitude: number;
+  longitude: number;
   startDate: string;
   endDate: string;
   constraints?: string;
@@ -19,39 +22,33 @@ export interface PlanRequest {
   riskScore?: number;
 }
 
-export interface OutdoorActivity {
-  name: string;
-  durationMinutes: number;
-  difficulty: DifficultyLevel;
-  notes: string;
-}
-
-export interface DayPlan {
-  date: string; // ISO date
-  dayLabel: string; // e.g. "Day 1"
-  summary: string;
-  activities: OutdoorActivity[];
+export interface PlanDay {
+  day: number;
+  /** Derived from startDate + (day - 1), not returned by the model. */
+  date: string;
+  activity: string;
+  distanceKm: number;
 }
 
 export interface BudgetEstimate {
   currency: "INR";
   total: number;
-  breakdown: {
-    stay: number;
-    food: number;
-    localTransport: number;
-    misc: number;
-  };
 }
 
 export interface PlanResponse {
   destination: string;
   startDate: string;
   endDate: string;
-  itinerary: DayPlan[];
-  packingChecklist: string[];
-  safetyNotes: string[];
+  days: PlanDay[];
+  packing: string[];
+  warnings: string[];
   budgetEstimate: BudgetEstimate;
-  isMockData: true;
+  /**
+   * Real output of rule_checker.py's check_plan(): does this specific plan
+   * respect the budget and per-day distance implied by the request. Not a
+   * hardcoded true, see main.py's /plan handler.
+   */
+  checksPassed: boolean;
+  isMockData: boolean;
   disclaimer: string;
 }

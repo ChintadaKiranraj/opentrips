@@ -15,12 +15,17 @@ import type { GeocodeResult } from "@/types/geo";
 import type { PlanResponse } from "@/types/plan";
 import type { RiskResponse } from "@/types/risk";
 
-type SubmitStage = "locating" | "planning";
+type SubmitStage = "locating" | "planning" | "saving";
 
 const stageLabels: Record<SubmitStage, string> = {
   locating: "Finding your destination…",
   planning: "Assessing risk and planning…",
+  saving: "Saving your plan…",
 };
+
+interface SaveTripApiResult {
+  id: string;
+}
 
 async function postJson<TResponse>(url: string, body: unknown): Promise<TResponse> {
   const response = await fetch(url, {
@@ -67,10 +72,11 @@ export function TripPlannerForm() {
 
     try {
       const location = await postJson<GeocodeResult>("/api/geocode", { place });
+      const resolvedPlace = location.displayName || place;
 
       setStage("planning");
       const risk = await postJson<RiskResponse>("/api/risk", {
-        place,
+        place: resolvedPlace,
         latitude: location.latitude,
         longitude: location.longitude,
         startDate,
@@ -79,7 +85,9 @@ export function TripPlannerForm() {
       });
 
       const plan = await postJson<PlanResponse>("/api/plan", {
-        place,
+        place: resolvedPlace,
+        latitude: location.latitude,
+        longitude: location.longitude,
         startDate,
         endDate,
         constraints,
@@ -88,7 +96,25 @@ export function TripPlannerForm() {
       });
 
       saveTripResult({ risk, plan, location });
-      router.push("/results");
+
+      // Persist for a shareable link when Postgres is configured; otherwise
+      // fall back to the session-only /results page (map + insights live there).
+      try {
+        setStage("saving");
+        const saved = await postJson<SaveTripApiResult>("/api/trips", {
+          place: resolvedPlace,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          startDate,
+          endDate,
+          constraints,
+          risk,
+          plan,
+        });
+        router.push(`/plans/${saved.id}`);
+      } catch {
+        router.push("/results");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {

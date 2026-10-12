@@ -1,0 +1,29 @@
+# Local Postgres for saved plans (/plans/[id]). Optional.
+# Prefer this for local smoke tests. Use Supabase for Render/production.
+#
+#   docker compose up -d
+#   cd frontend && set DATABASE_URL=postgresql://opentrips:opentrips@localhost:5432/opentrips && pnpm db:push
+#
+# Then put the same DATABASE_URL into frontend/.env.local.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: opentrips-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: opentrips
+      POSTGRES_PASSWORD: opentrips
+      POSTGRES_DB: opentrips
+    volumes:
+      - opentrips_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opentrips -d opentrips"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  opentrips_pgdata:

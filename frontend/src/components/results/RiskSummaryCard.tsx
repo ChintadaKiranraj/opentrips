@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CloudRain, Droplets, Gauge, Waves } from "lucide-react";
+import { CloudRain, Droplets, Umbrella, Waves } from "lucide-react";
 
 import { RiskGauge } from "@/components/results/RiskGauge";
 import { Card } from "@/components/ui/Card";
@@ -22,40 +22,18 @@ export function RiskSummaryCard({ risk, delay = 0 }: { risk: RiskResponse; delay
   const metrics = risk.modelMetrics;
 
   const rainfallStats = [
-    {
-      label: "Last 24h",
-      value: risk.rainfallFeatures.last24hRainfallMm,
-      unit: " mm",
-      max: 100,
-      icon: CloudRain,
-    },
-    {
-      label: "Last 72h",
-      value: risk.rainfallFeatures.last72hRainfallMm,
-      unit: " mm",
-      max: 200,
-      icon: Droplets,
-    },
-    {
-      label: "Forecast",
-      value: risk.rainfallFeatures.forecastRainfallMm,
-      unit: " mm",
-      max: 100,
-      icon: Waves,
-    },
-    {
-      label: "Soil saturation",
-      value: risk.rainfallFeatures.soilSaturationIndex,
-      unit: "",
-      max: 1,
-      icon: Gauge,
-      decimals: 2,
-    },
+    { label: "1-day rain", value: risk.rainfallFeatures.rain1dMm, unit: " mm", max: 50, icon: CloudRain },
+    { label: "3-day rain", value: risk.rainfallFeatures.rain3dMm, unit: " mm", max: 100, icon: Droplets },
+    { label: "7-day rain", value: risk.rainfallFeatures.rain7dMm, unit: " mm", max: 150, icon: Waves },
+    { label: "14-day rain", value: risk.rainfallFeatures.rain14dMm, unit: " mm", max: 200, icon: Umbrella },
   ];
 
   return (
     <Card delay={delay}>
-      <CardHeader title={`Landslide risk in ${risk.destination}`} badge={<MockDataBadge />} />
+      <CardHeader
+        title={`Landslide risk in ${risk.destination}`}
+        badge={risk.isMockData ? <MockDataBadge /> : undefined}
+      />
 
       <div className="mt-6 grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
         <RiskGauge score={risk.riskScore} verdict={risk.verdict} />
@@ -87,7 +65,7 @@ export function RiskSummaryCard({ risk, delay = 0 }: { risk: RiskResponse; delay
                 {stat.label}
               </p>
               <p className="mt-0.5 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                {stat.value.toFixed(stat.decimals ?? 0)}
+                {stat.value.toFixed(1)}
                 {stat.unit}
               </p>
               <div className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
