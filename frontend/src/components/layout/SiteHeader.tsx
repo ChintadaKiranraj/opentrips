@@ -37,8 +37,8 @@ export function SiteHeader({ userMenu }: { userMenu?: ReactNode }) {
           >
             <MapPinned className="h-5 w-5 text-white dark:text-zinc-950" aria-hidden="true" />
           </motion.span>
-          <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-           Open Trip
+          <span className="text-lg font-semibold tracking-tight text-[#163226] dark:text-zinc-50">
+            OpenTrips
           </span>
         </Link>
         <div className="flex items-center gap-3 sm:gap-4">

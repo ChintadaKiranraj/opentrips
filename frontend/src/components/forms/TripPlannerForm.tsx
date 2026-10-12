@@ -194,7 +194,7 @@ export function TripPlannerForm() {
         )}
       </AnimatePresence>
 
-      <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
+      <Button type="submit" isLoading={isSubmitting} className="w-full py-3 text-base">
         {stage ? stageLabels[stage] : "Check risk and plan my trip"}
         {!isSubmitting && <ArrowRight className="relative h-4 w-4" aria-hidden="true" />}
       </Button>

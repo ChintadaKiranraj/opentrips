@@ -25,7 +25,7 @@ function toLocalPath(value: string | string[] | undefined) {
 
 export default function SignInPage({ searchParams }: { searchParams: SearchParams }) {
   return (
-    <main className="flex w-full flex-1 items-center justify-center px-6 py-16">
+    <main className="flex w-full flex-1 items-center justify-center bg-[#f6f3ee] px-6 py-16">
       <Suspense fallback={null}>
         <SignInContent searchParams={searchParams} />
       </Suspense>

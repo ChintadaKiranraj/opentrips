@@ -41,9 +41,7 @@ export function Card({
       }
       onMouseMove={handleMouseMove}
       className={cn(
-        "glass-surface group/card relative isolate rounded-2xl p-6 shadow-[0_1px_0_0_rgba(255,255,255,0.4),0_20px_60px_-24px_rgba(16,185,129,0.25)] transition-shadow dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05),0_20px_60px_-24px_rgba(16,185,129,0.15)]",
-        hover &&
-          "hover:shadow-[0_1px_0_0_rgba(255,255,255,0.4),0_28px_70px_-20px_rgba(16,185,129,0.35)]",
+        "group/card relative isolate rounded-[28px] bg-[#f7f4ef] p-6 text-[#163226] shadow-[0_16px_50px_-28px_rgba(20,40,20,0.45)]",
         className,
       )}
       {...props}

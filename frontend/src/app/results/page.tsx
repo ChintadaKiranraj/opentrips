@@ -3,11 +3,10 @@
 import Link from "next/link";
 
 import { AreaInsightsSection } from "@/components/insights/AreaInsightsSection";
+import { PageShell } from "@/components/layout/PageShell";
 import { ItineraryCard } from "@/components/results/ItineraryCard";
 import { RiskSummaryCard } from "@/components/results/RiskSummaryCard";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { FadeIn } from "@/components/ui/FadeIn";
 import { useTripResult } from "@/lib/utils/trip-storage";
 
 export default function ResultsPage() {
@@ -15,34 +14,22 @@ export default function ResultsPage() {
 
   if (result === null) {
     return (
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
-        <Card className="text-center">
-          <p className="text-zinc-700 dark:text-zinc-300">
-            No trip results found for this session. Plan a trip first to see a risk assessment and
-            itinerary here.
-          </p>
+      <PageShell title="No trip yet">
+        <div className="rounded-[28px] bg-[#f7f4ef] p-6 text-center text-[#163226]">
+          <p>Plan a trip first to see a risk assessment and itinerary here.</p>
           <Link href="/" className="mt-4 inline-block">
             <Button>Plan a trip</Button>
           </Link>
-        </Card>
-      </main>
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-6 py-12 sm:py-16">
-      <FadeIn className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Your trip results
-        </h1>
-        <Link
-          href="/"
-          className="text-sm font-medium text-emerald-700 transition-colors hover:text-emerald-800 hover:underline dark:text-emerald-400 dark:hover:text-emerald-300"
-        >
-          Plan another trip
-        </Link>
-      </FadeIn>
-
+    <PageShell
+      title={`${result.risk.destination} trip plan`}
+      subtitle={`${result.plan.startDate} to ${result.plan.endDate}`}
+    >
       <RiskSummaryCard risk={result.risk} delay={0.1} />
       {result.location && (
         <AreaInsightsSection
@@ -54,6 +41,11 @@ export default function ResultsPage() {
         />
       )}
       <ItineraryCard plan={result.plan} delay={0.3} />
-    </main>
+      <p className="text-center">
+        <Link href="/" className="text-sm font-medium text-[#1d4a32] underline">
+          Plan another trip
+        </Link>
+      </p>
+    </PageShell>
   );
 }

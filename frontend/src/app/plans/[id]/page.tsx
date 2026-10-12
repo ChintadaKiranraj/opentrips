@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { PageShell } from "@/components/layout/PageShell";
 import { ItineraryCard } from "@/components/results/ItineraryCard";
 import { RiskSummaryCard } from "@/components/results/RiskSummaryCard";
 import { Button } from "@/components/ui/Button";
@@ -50,22 +51,15 @@ async function SavedPlan({ params }: { params: Promise<{ id: string }> }) {
   const plan = trip.planJson as unknown as PlanResponse;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-6 py-12 sm:py-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Saved trip to {trip.place}
-        </h1>
-        <Link
-          href="/"
-          className="text-sm font-medium text-emerald-700 transition-colors hover:text-emerald-800 hover:underline dark:text-emerald-400 dark:hover:text-emerald-300"
-        >
-          Plan another trip
-        </Link>
-      </div>
-
+    <PageShell title={`${trip.place} trip plan`} subtitle={`${trip.startDate} to ${trip.endDate}`}>
       <RiskSummaryCard risk={risk} delay={0.1} />
       <ItineraryCard plan={plan} delay={0.25} />
-    </main>
+      <p className="text-center">
+        <Link href="/" className="text-sm font-medium text-[#1d4a32] underline">
+          Plan another trip
+        </Link>
+      </p>
+    </PageShell>
   );
 }
 
