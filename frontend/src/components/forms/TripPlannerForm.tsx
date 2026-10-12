@@ -11,15 +11,16 @@ import { TextArea } from "@/components/ui/TextArea";
 import { TextInput } from "@/components/ui/TextInput";
 import { saveTripResult } from "@/lib/utils/trip-storage";
 import type { ApiErrorResponse } from "@/types/api";
+import type { GeocodeResult } from "@/types/geo";
 import type { PlanResponse } from "@/types/plan";
 import type { RiskResponse } from "@/types/risk";
 
-/**
- * Placeholder coordinates until B2 wires up a real geocoding lookup for the
- * destination text. The mock /api/risk endpoint only uses them to echo back
- * rainfall placeholders, so a fixed pair is fine for now.
- */
-const PLACEHOLDER_COORDINATES = { latitude: 0, longitude: 0 };
+type SubmitStage = "locating" | "planning";
+
+const stageLabels: Record<SubmitStage, string> = {
+  locating: "Finding your destination…",
+  planning: "Assessing risk and planning…",
+};
 
 async function postJson<TResponse>(url: string, body: unknown): Promise<TResponse> {
   const response = await fetch(url, {
@@ -44,8 +45,9 @@ export function TripPlannerForm() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [constraints, setConstraints] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stage, setStage] = useState<SubmitStage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isSubmitting = stage !== null;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,12 +63,16 @@ export function TripPlannerForm() {
       return;
     }
 
-    setIsSubmitting(true);
+    setStage("locating");
 
     try {
+      const location = await postJson<GeocodeResult>("/api/geocode", { place });
+
+      setStage("planning");
       const risk = await postJson<RiskResponse>("/api/risk", {
         place,
-        ...PLACEHOLDER_COORDINATES,
+        latitude: location.latitude,
+        longitude: location.longitude,
         startDate,
         endDate,
         constraints,
@@ -81,12 +87,12 @@ export function TripPlannerForm() {
         riskScore: risk.riskScore,
       });
 
-      saveTripResult({ risk, plan });
+      saveTripResult({ risk, plan, location });
       router.push("/results");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setStage(null);
     }
   }
 
@@ -163,7 +169,7 @@ export function TripPlannerForm() {
       </AnimatePresence>
 
       <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
-        {isSubmitting ? "Assessing risk and planning…" : "Check risk and plan my trip"}
+        {stage ? stageLabels[stage] : "Check risk and plan my trip"}
         {!isSubmitting && <ArrowRight className="relative h-4 w-4" aria-hidden="true" />}
       </Button>
     </form>
